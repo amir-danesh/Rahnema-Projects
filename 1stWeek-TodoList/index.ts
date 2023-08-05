@@ -1,8 +1,8 @@
 import * as readline from "readline";
 import { commands } from "./constants";
 
-const tasks: Card[] = [];
-let activeCard: Card | null = null;
+const tasks: Task[] = [];
+let activeTask: Task | null = null;
 
 const labelTypes = ["yellow", "green", "blue", "red"]; // This will be changed to Unions
 const statusTypes = ["todo", "doing", "done"]; //This will be changed to Unions
@@ -12,7 +12,7 @@ const rl = readline.createInterface({
   output: process.stdout,
 });
 
-class Card {
+class Task {
   subject: string;
   deadLine: Date | null;
   labels: string[];
@@ -34,7 +34,7 @@ class Card {
     this.endDate = status.toLowerCase() === "done" ? new Date() : null;
   }
 
-  showSingleCardDetails = () => {
+  showSingleTaskDetails = () => {
     const subjectText = `Subject:    ${this.subject}`;
     const deadLineText = `\nDeadline:   ${
       this.deadLine ? this.deadLine.toLocaleDateString() : "-"
@@ -66,7 +66,7 @@ class Card {
     return fullText;
   };
 
-  showSingleCardAbstract = (number: number | null = null) => {
+  showSingleTaskAbstract = (number: number | null = null) => {
     let fullText = number !== null ? `${number}-   ` : "";
     fullText += `${this.subject.slice(0, 10)} ${
       this.subject.length > 10 ? "...   " : ""
@@ -170,7 +170,7 @@ const createTask = (commandArray: string[]) => {
     : [];
   const status: string = commandArray[4] ? commandArray[4] : "todo";
 
-  tasks.push(new Card(subject, deadLine, labels, status));
+  tasks.push(new Task(subject, deadLine, labels, status));
   console.log("\n---- Task added.");
 };
 
@@ -184,10 +184,10 @@ const editTaskGeneral = async (taskNumberStr: string) => {
     console.log("\n!!!! The provided number exceeds the number of tasks.");
     return;
   }
-  activeCard = tasks[taskNumber];
-  const text = `\n--- You are now editing task ${activeCard.subject}.\n
+  activeTask = tasks[taskNumber];
+  const text = `\n--- You are now editing task ${activeTask.subject}.\n
                 Details:
-                ${activeCard.showSingleCardDetails()}`.replace(/^ +/gm, "");
+                ${activeTask.showSingleTaskDetails()}`.replace(/^ +/gm, "");
 
   console.log(text);
   await handleEditFields();
@@ -239,11 +239,11 @@ const handleEditLabel = async () => {
 
     switch (commandArray[0]) {
       case "add":
-        activeCard?.addLabel(commandArray[1]);
+        activeTask?.addLabel(commandArray[1]);
         break;
 
       case "remove":
-        activeCard?.removeLabel(commandArray[1]);
+        activeTask?.removeLabel(commandArray[1]);
         break;
 
       default:
@@ -269,7 +269,7 @@ const handleEditStatus = async () => {
 
     switch (commandArray[0]) {
       case "changeto":
-        activeCard?.changeStatus(commandArray[1]);
+        activeTask?.changeStatus(commandArray[1]);
         break;
 
       default:
@@ -293,7 +293,7 @@ const showCommandsBeautify = () => {
 
 const showAllTasks = () => {
   tasks.map((x, i: number) =>
-    console.log("\n", x.showSingleCardAbstract(i + 1))
+    console.log("\n", x.showSingleTaskAbstract(i + 1))
   );
 };
 
@@ -322,7 +322,7 @@ const showDetail = (taskNumberStr: string) => {
     return;
   }
 
-  console.log(tasks[taskNumber].showSingleCardDetails());
+  console.log(tasks[taskNumber].showSingleTaskDetails());
 };
 
 const filterByStatus = (filterStr: string) => {
@@ -334,7 +334,7 @@ const filterByStatus = (filterStr: string) => {
 
   filteredTasks.length === 0
     ? console.log("No task matched your filter")
-    : filteredTasks.map((task) => console.log(task.showSingleCardDetails()));
+    : filteredTasks.map((task) => console.log(task.showSingleTaskDetails()));
 };
 
 const filterByLabel = (filterStr: string) => {
@@ -346,7 +346,7 @@ const filterByLabel = (filterStr: string) => {
 
   filteredTasks.length === 0
     ? console.log("No task matched your filter")
-    : filteredTasks.map((task) => console.log(task.showSingleCardDetails()));
+    : filteredTasks.map((task) => console.log(task.showSingleTaskDetails()));
 };
 
 const filterBySubject = (filterStr: string) => {
@@ -356,7 +356,7 @@ const filterBySubject = (filterStr: string) => {
 
   filteredTasks.length === 0
     ? console.log("No task matched your filter")
-    : filteredTasks.map((task) => console.log(task.showSingleCardDetails()));
+    : filteredTasks.map((task) => console.log(task.showSingleTaskDetails()));
 };
 
 const handleFilterBy = (filterType: string, filterStr: string) => {
@@ -388,11 +388,13 @@ const promptUser = (message: string): Promise<string> => {
 };
 
 const main = async () => {
+    let running = true
   const text = `\nYou can use below commands to interact with the application:
                    ${showCommandsBeautify()}`;
   console.log(text);
 
-  while (true) {
+  while (running) {
+
     const command: string = await promptUser("Enter Your Command : ");
     const commandArray: string[] = divideStringToArray(command);
 
@@ -421,6 +423,12 @@ const main = async () => {
         handleFilterBy(commandArray[1], commandArray[2]);
         break;
 
+      case "exit":
+        console.log("\n---- QUITING APP ...\n\n APP QUITED!");
+        
+        running = false;
+        break;
+
       default:
         console.log("\n!!!! Your command is not right. Try again.");
     }
@@ -430,31 +438,31 @@ const main = async () => {
 main();
 
 // TEST DATA
-const a = new Card(
-  "first card",
+const a = new Task(
+  "first Task",
   convertToDateObject("10-07-1999"),
   ["yellow", "red", "green"],
   "doing"
 );
-const b = new Card(
+const b = new Task(
   "taskName1",
   convertToDateObject("null"),
   ["Yellow", "Red", "Green"],
   "doing"
 );
-const c = new Card(
+const c = new Task(
   "taskName2",
   convertToDateObject("01-01-2020"),
   ["Yellow", "Blue"],
   "todo"
 );
-const d = new Card(
+const d = new Task(
   "taskName3",
   convertToDateObject("null"),
   ["Yellow"],
   "done"
 );
-const e = new Card("taskName4", convertToDateObject("10-12-2019"), [], "null");
+const e = new Task("taskName4", convertToDateObject("10-12-2019"), [], "null");
 tasks.push(a);
 tasks.push(b);
 tasks.push(c);
